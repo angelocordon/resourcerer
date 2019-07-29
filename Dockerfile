@@ -1,18 +1,18 @@
-FROM starefossen/ruby-node:latest
-MAINTAINER Angelo Cordon <angelocordon@gmail.com>
+FROM ruby:2.6.3-alpine
 
-RUN apt-get update -qq \
-  && apt-get install -y \
-  build-essential \
-  libpq-dev \
-  && gem install bundler \
-  && apt-get -q clean \
-  && rm -rf /var/lib/apt/lists
+RUN apk add --no-cache --update \
+  build-base \
+  postgresql-dev \
+  tzdata \
+  nodejs-current \
+  yarn 
 
-WORKDIR /usr/src/app
+ENV APP /app
+RUN mkdir $APP
+WORKDIR $APP
 
-COPY Gemfile* yarn.lock /usr/src/app/
-RUN bundle install
-COPY . /usr/src/app
+ADD Gemfile* package.json yarn.lock $APP/
+RUN bundle install --jobs=4
+RUN NODE_ENV=development yarn install
 
-RUN yarn install && yarn check --integrity
+ADD . $APP/

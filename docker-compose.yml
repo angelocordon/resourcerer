@@ -1,28 +1,25 @@
-version: "3.2"
+version: "3.7"
 services:
-  web: &rails_base
-    build:
-      dockerfile: Dockerfile
-      context: .
-    ports:
-      - "3000:3000"
-    depends_on:
-      - db
-    environment:
-      RAILS_ENV: development
-      YARN_INTEGRITY_ENABLED: "false"
-    volumes:
-      - .:/usr/src/app
-      - type: tmpfs
-        target: /usr/src/app/tmp/pids/
-    command: bundle exec rails server -b 0.0.0.0 -p 3000
-
-  webpacker:
-    ports: []
-    <<: *rails_base
-    command: ./bin/webpack-dev-server
-
   db:
     image: postgres
     ports:
       - "5432:5432"
+
+  webpacker:
+    build: .
+    command: bundle exec bin/webpack-dev-server
+    volumes:
+      - .:/app
+    ports:
+      - "8080:8080"
+
+  web:
+    build: .
+    command: bundle exec puma -C config/puma.rb
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - webpacker
